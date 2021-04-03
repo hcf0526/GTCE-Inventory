@@ -21,11 +21,22 @@ import static gtceinventory.common.blocks.GTCEInventoryMetaBlocks.INVENTORY_PIPE
 
 import java.util.function.Function;
 
+import gregtech.api.items.OreDictNames;
 import gregtech.api.pipenet.block.ItemBlockPipe;
+import gregtech.api.recipes.ModHandler;
+import gregtech.api.unification.material.Materials;
+import gregtech.api.unification.ore.OrePrefix;
+import gregtech.api.unification.stack.UnificationEntry;
+import gregtech.common.blocks.BlockMachineCasing.MachineCasingType;
+import gregtech.common.blocks.MetaBlocks;
 import gtceinventory.GTCEInventory;
+import gtceinventory.common.metatileentities.GTCEInventoryMetaTileEntities;
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -48,6 +59,18 @@ public class CommonProxy {
         final IForgeRegistry<Item> registry = event.getRegistry();
 
         registry.register(createItemBlock(INVENTORY_PIPE, ItemBlockPipe::new));
+    }
+
+    @SubscribeEvent
+    public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
+        GTCEInventory.LOGGER.info("Registering Recipes...");
+
+        ModHandler.addShapedRecipe("inventory_pipe",
+            new ItemStack(ItemBlock.getItemFromBlock(INVENTORY_PIPE), 4), "XXX", " C ", "XXX",
+            'C', OreDictNames.chestWood,
+            'X', new UnificationEntry(OrePrefix.plate, Materials.Lead));
+
+        ModHandler.addShapedRecipe("gtceinventory_workbench_bronze", GTCEInventoryMetaTileEntities.WORKBENCH.getStackForm(), "ChC", "PHP", "PWP", 'C', OreDictNames.chestWood, 'W', new ItemStack(Blocks.CRAFTING_TABLE), 'P', new UnificationEntry(OrePrefix.plate, Materials.Bronze), 'H', MetaBlocks.MACHINE_CASING.getItemVariant(MachineCasingType.BRONZE_HULL));
     }
 
     private static <T extends Block> ItemBlock createItemBlock(final T block, final Function<T, ItemBlock> producer) {

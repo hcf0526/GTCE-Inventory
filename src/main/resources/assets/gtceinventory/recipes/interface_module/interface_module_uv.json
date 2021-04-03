@@ -1,0 +1,13 @@
+{
+  "type": "gregtech:metaitem_shapeless",
+  "ingredients": [{
+    "type": "gregtech:metaitem",
+    "name": "conveyor.module.uv"
+  }, {
+    "item": "gtceinventory:inventory_pipe",
+    "data": 0
+  }],
+  "result": {
+    "name": "interface.module.uv"
+  }
+}

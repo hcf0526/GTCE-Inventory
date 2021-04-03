@@ -1,0 +1,13 @@
+{
+  "type": "gregtech:metaitem_shapeless",
+  "ingredients": [{
+    "type": "gregtech:metaitem",
+    "name": "interface.module.uv"
+  }, {
+    "type": "forge:ore_dict",
+    "ore": "circuitSuperconductor"
+  }],
+  "result": {
+    "name": "stock.module.uv"
+  }
+}

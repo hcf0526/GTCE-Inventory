@@ -72,7 +72,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-// Review: Temporary renderer to reuse the fluid pipe assets (but with aluminium colouring), haven't tried the original InvPipeRenderer
+// Review: Temporary renderer to reuse the fluid pipe assets (but with lead colouring), haven't tried the original InvPipeRenderer
 public class InventoryPipeRenderer implements ICCBlockRenderer, IItemRenderer {
 
     public static ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GTCEInventory.MODID, "inventory_pipe"), "normal");
@@ -143,7 +143,7 @@ public class InventoryPipeRenderer implements ICCBlockRenderer, IItemRenderer {
         renderState.reset();
         renderState.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.ITEM);
         InventoryPipeType pipeType = InventoryPipeType.NORMAL;
-        Material material = Materials.Aluminium;
+        Material material = Materials.Lead;
         if (pipeType != null && material != null) {
             renderPipeBlock(material, pipeType, IPipeTile.DEFAULT_INSULATION_COLOR, renderState, new IVertexOperation[0], 0);
         }
@@ -166,7 +166,7 @@ public class InventoryPipeRenderer implements ICCBlockRenderer, IItemRenderer {
         }
 
         InventoryPipeType pipeType = tileEntityPipe.getPipeType();
-        Material pipeMaterial = Materials.Aluminium;
+        Material pipeMaterial = Materials.Lead;
         int paintingColor = tileEntityPipe.getInsulationColor();
 
         if (pipeType != null && pipeMaterial != null) {
@@ -294,7 +294,7 @@ public class InventoryPipeRenderer implements ICCBlockRenderer, IItemRenderer {
             return Pair.of(TextureUtils.getMissingSprite(), 0xFFFFFF);
         }
         InventoryPipeType pipeType = tileEntity.getPipeType();
-        Material material = Materials.Aluminium;
+        Material material = Materials.Lead;
         if (pipeType == null || material == null) {
             return Pair.of(TextureUtils.getMissingSprite(), 0xFFFFFF);
         }

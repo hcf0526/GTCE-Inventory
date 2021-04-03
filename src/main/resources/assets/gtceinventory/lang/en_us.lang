@@ -1,5 +1,21 @@
 tile.inventory_pipe.name=Inventory Pipe
-metaitem.interface.module.lv.name=Storage Network Interface
-metaitem.keep_in_stock.module.lv.name=Keep In Stock
+
+metaitem.interface.module.lv.name=Storage Network Interface (LV)
+metaitem.interface.module.mv.name=Storage Network Interface (MV)
+metaitem.interface.module.hv.name=Storage Network Interface (HV)
+metaitem.interface.module.ev.name=Storage Network Interface (EV)
+metaitem.interface.module.iv.name=Storage Network Interface (IV)
+metaitem.interface.module.luv.name=Storage Network Interface (LUV)
+metaitem.interface.module.zpm.name=Storage Network Interface (ZPM)
+metaitem.interface.module.uv.name=Storage Network Interface (UV)
+
+metaitem.stock.module.lv.name=Keep In Stock (LV)
+metaitem.stock.module.mv.name=Keep In Stock (MV)
+metaitem.stock.module.hv.name=Keep In Stock (HV)
+metaitem.stock.module.ev.name=Keep In Stock (EV)
+metaitem.stock.module.iv.name=Keep In Stock (IV)
+metaitem.stock.module.luv.name=Keep In Stock (LUV)
+metaitem.stock.module.zpm.name=Keep In Stock (ZPM)
+metaitem.stock.module.uv.name=Keep In Stock (UV)
 
 gtceinventory.machine.workbench.name=Crafting Station

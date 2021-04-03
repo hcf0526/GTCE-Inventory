@@ -55,6 +55,7 @@ public class GTCEInventory {
 	    GTCEInventoryCapabilityManager.init();
         GTCEInventoryMetaBlocks.init();
 		GTCEInventoryMetaItems.init();
+        GTCEInventoryMetaTileEntities.init();
 		proxy.onPreLoad();
 		MinecraftForge.EVENT_BUS.register(this);
 	}
@@ -62,7 +63,6 @@ public class GTCEInventory {
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {
         proxy.onLoad();
-        GTCEInventoryMetaTileEntities.init();
         GTCEInventoryCoverBehaviors.init();
     }
 

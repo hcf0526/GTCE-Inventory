@@ -1,0 +1,13 @@
+{
+  "type": "gregtech:metaitem_shapeless",
+  "ingredients": [{
+    "type": "gregtech:metaitem",
+    "name": "interface.module.iv"
+  }, {
+    "type": "forge:ore_dict",
+    "ore": "circuitElite"
+  }],
+  "result": {
+    "name": "stock.module.iv"
+  }
+}

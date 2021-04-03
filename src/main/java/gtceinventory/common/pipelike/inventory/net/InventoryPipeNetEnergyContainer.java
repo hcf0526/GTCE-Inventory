@@ -36,7 +36,6 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
         long canAccept = getEnergyCapacity() - getEnergyStored();
         if (voltage > 0L && amperage > 0L && (side == null || inputsEnergy(side))) {
             if (voltage > getInputVoltage()) {
-                //GTUtility.doOvervoltageExplosion(metaTileEntity, voltage);
                 return Math.min(amperage, getInputAmperage());
             }
             if (canAccept >= voltage) {

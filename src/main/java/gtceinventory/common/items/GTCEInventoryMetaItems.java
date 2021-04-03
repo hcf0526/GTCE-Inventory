@@ -22,8 +22,22 @@ import gregtech.api.items.metaitem.MetaItem;
 public final class GTCEInventoryMetaItems {
 
     public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_LV;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_MV;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_HV;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_EV;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_IV;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_LUV;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_ZPM;
+    public static MetaItem<?>.MetaValueItem INTERFACE_MODULE_UV;
 
-    public static MetaItem<?>.MetaValueItem KEEP_IN_STOCK_MODULE_LV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_LV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_MV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_HV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_EV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_IV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_LUV;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_ZPM;
+    public static MetaItem<?>.MetaValueItem STOCK_MODULE_UV;
 
     private GTCEInventoryMetaItems() {
     }

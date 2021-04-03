@@ -1,6 +1,0 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "gtceinventory:items/metaitems/keep_in_stock.module.lv"
-  }
-}

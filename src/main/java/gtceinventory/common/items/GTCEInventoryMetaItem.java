@@ -17,8 +17,7 @@
  */
 package gtceinventory.common.items;
 
-import static gtceinventory.common.items.GTCEInventoryMetaItems.INTERFACE_MODULE_LV;
-import static gtceinventory.common.items.GTCEInventoryMetaItems.KEEP_IN_STOCK_MODULE_LV;
+import static gtceinventory.common.items.GTCEInventoryMetaItems.*;
 
 import gregtech.api.items.materialitem.MaterialMetaItem;
 import gregtech.api.items.metaitem.MetaItem;
@@ -33,9 +32,23 @@ public class GTCEInventoryMetaItem extends MaterialMetaItem {
     @Override
     public void registerSubItems() {
 
-        INTERFACE_MODULE_LV = addItem(001, "interface.module.lv");
+        INTERFACE_MODULE_LV = addItem(1, "interface.module.lv");
+        INTERFACE_MODULE_MV = addItem(2, "interface.module.mv");
+        INTERFACE_MODULE_HV = addItem(3, "interface.module.hv");
+        INTERFACE_MODULE_EV = addItem(4, "interface.module.ev");
+        INTERFACE_MODULE_IV = addItem(5, "interface.module.iv");
+        INTERFACE_MODULE_LUV = addItem(6, "interface.module.luv");
+        INTERFACE_MODULE_ZPM = addItem(7, "interface.module.zpm");
+        INTERFACE_MODULE_UV = addItem(8, "interface.module.uv");
 
-        KEEP_IN_STOCK_MODULE_LV = addItem(021, "keep_in_stock.module.lv");
+        STOCK_MODULE_LV = addItem(21, "stock.module.lv");
+        STOCK_MODULE_MV = addItem(22, "stock.module.mv");
+        STOCK_MODULE_HV = addItem(23, "stock.module.hv");
+        STOCK_MODULE_EV = addItem(24, "stock.module.ev");
+        STOCK_MODULE_IV = addItem(25, "stock.module.iv");
+        STOCK_MODULE_LUV = addItem(26, "stock.module.luv");
+        STOCK_MODULE_ZPM = addItem(27, "stock.module.zpm");
+        STOCK_MODULE_UV = addItem(28, "stock.module.uv");
     }
 
     @Override
