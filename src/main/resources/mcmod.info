@@ -1,0 +1,16 @@
+[
+{
+  "modid": "gtceinventory",
+  "name": "GTCE Inventory",
+  "description": "Inventory Pipes for GTCE",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["warjort"],
+  "credits": "The creators of GTCE, GT5U and most importantly, GregoriusT.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": ["gregtech"]
+}
+]

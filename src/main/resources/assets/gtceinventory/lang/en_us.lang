@@ -1,0 +1,5 @@
+tile.inventory_pipe.name=Inventory Pipe
+metaitem.interface.module.lv.name=Storage Network Interface
+metaitem.keep_in_stock.module.lv.name=Keep In Stock
+
+gtceinventory.machine.workbench.name=Crafting Station
