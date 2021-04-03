@@ -64,21 +64,28 @@ public class InventoryPipeNet extends PipeNet<EmptyNodeData> implements ITickabl
     }
 
     @Override
-    protected void transferNodeData(Map<BlockPos, Node<EmptyNodeData>> transferredNodes, PipeNet<EmptyNodeData> parentNet) {
+    protected void onConnectionsUpdate() {
+        super.onConnectionsUpdate();
+        final long newEnergyCapacity = InventoryPipeNetEnergyContainer.PER_PIPE_CAPACITY * getAllNodes().size();
+        this.energyContainer.updateEnergyCapacity(newEnergyCapacity);
+    }
+
+    @Override
+    protected void transferNodeData(final Map<BlockPos, Node<EmptyNodeData>> transferredNodes, final PipeNet<EmptyNodeData> parentNet) {
         super.transferNodeData(transferredNodes, parentNet);
-        InventoryPipeNet parentInventoryNet = (InventoryPipeNet) parentNet;
-        InventoryPipeNetEnergyContainer parentEnergyContainer = parentInventoryNet.energyContainer;
-        long parentEnergy = parentEnergyContainer.getEnergyStored();
+        final InventoryPipeNet parentInventoryNet = (InventoryPipeNet) parentNet;
+        final InventoryPipeNetEnergyContainer parentEnergyContainer = parentInventoryNet.energyContainer;
+        final long parentEnergy = parentEnergyContainer.getEnergyStored();
         if (parentEnergy > 0) {
             if (parentNet.getAllNodes().isEmpty()) {
                 //if this is a merge of pipe nets, just add all the energy
-                energyContainer.addEnergy(parentEnergy);
+                this.energyContainer.addEnergy(parentEnergy);
             } else {
                 //otherwise, it is donating of some nodes to our net in result of split
                 //so, we should estabilish equal amount of energy in networks
-                long firstNetCapacity = energyContainer.getEnergyCapacity();
+                long firstNetCapacity = this.energyContainer.getEnergyCapacity();
                 long secondNetCapacity = parentInventoryNet.energyContainer.getEnergyCapacity();
-                long totalEnergy = energyContainer.getEnergyStored() + parentEnergy;
+                long totalEnergy = this.energyContainer.getEnergyStored() + parentEnergy;
                 long energy1 = totalEnergy * firstNetCapacity / (firstNetCapacity + secondNetCapacity);
                 long energy2 = totalEnergy - energy1;
 

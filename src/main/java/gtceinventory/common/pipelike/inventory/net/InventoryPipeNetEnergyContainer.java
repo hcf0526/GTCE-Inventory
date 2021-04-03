@@ -24,20 +24,19 @@ import net.minecraftforge.common.util.INBTSerializable;
 
 public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSerializable<NBTTagCompound> {
 
-    private final long maxCapacity = 1024L;
+    public static final long PER_PIPE_CAPACITY = 256L;
+
+    private long capacity = 0L;
     private long energyStored = 0L;
 
-    public void setEnergyStored(long energyStored) {
+    public void setEnergyStored(final long energyStored) {
         this.energyStored = energyStored;
     }
 
     @Override
-    public long acceptEnergyFromNetwork(EnumFacing side, long voltage, long amperage) {
-        long canAccept = getEnergyCapacity() - getEnergyStored();
+    public long acceptEnergyFromNetwork(final EnumFacing side, final long voltage, final long amperage) {
+        final long canAccept = getEnergyCapacity() - getEnergyStored();
         if (voltage > 0L && amperage > 0L && (side == null || inputsEnergy(side))) {
-            if (voltage > getInputVoltage()) {
-                return Math.min(amperage, getInputAmperage());
-            }
             if (canAccept >= voltage) {
                 long amperesAccepted = Math.min(canAccept / voltage, Math.min(amperage, getInputAmperage()));
                 if (amperesAccepted > 0) {
@@ -50,14 +49,14 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
     }
 
     @Override
-    public boolean inputsEnergy(EnumFacing side) {
+    public boolean inputsEnergy(final EnumFacing side) {
         return true;
     }
 
     @Override
-    public long changeEnergy(long differenceAmount) {
-        long oldEnergyStored = getEnergyStored();
-        long newEnergyStored = (maxCapacity - oldEnergyStored < differenceAmount) ? maxCapacity : (oldEnergyStored + differenceAmount);
+    public long changeEnergy(final long differenceAmount) {
+        final long oldEnergyStored = getEnergyStored();
+        long newEnergyStored = (this.capacity - oldEnergyStored < differenceAmount) ? this.capacity : (oldEnergyStored + differenceAmount);
         if (newEnergyStored < 0)
             newEnergyStored = 0;
         setEnergyStored(newEnergyStored);
@@ -66,12 +65,12 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
 
     @Override
     public long getEnergyStored() {
-        return energyStored;
+        return this.energyStored;
     }
 
     @Override
     public long getEnergyCapacity() {
-        return maxCapacity;
+        return this.capacity;
     }
 
     @Override
@@ -81,18 +80,26 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
 
     @Override
     public long getInputVoltage() {
-        return 32L;
+        // Review: Accept any voltage, really constrained by number of pipes?
+        return Long.MAX_VALUE;
     }
 
     @Override
     public NBTTagCompound serializeNBT() {
-        NBTTagCompound compound = new NBTTagCompound();
-        compound.setLong("EnergyStored", energyStored);
+        final NBTTagCompound compound = new NBTTagCompound();
+        compound.setLong("Capacity", this.capacity);
+        compound.setLong("EnergyStored", this.energyStored);
         return compound;
     }
 
     @Override
-    public void deserializeNBT(NBTTagCompound compound) {
+    public void deserializeNBT(final NBTTagCompound compound) {
+        this.capacity = compound.getLong("Capacity");
         this.energyStored = compound.getLong("EnergyStored");
+    }
+
+    public void updateEnergyCapacity(final long newEnergyCapacity) {
+        this.capacity = newEnergyCapacity;
+        this.energyStored = Math.min(this.energyStored, this.capacity);
     }
 }
