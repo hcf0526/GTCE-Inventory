@@ -38,14 +38,14 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 @Mod(modid = GTCEInventory.MODID, name = GTCEInventory.NAME, version = GTCEInventory.VERSION, dependencies = "required-after:gregtech@[1.13.0.681,)")
 public class GTCEInventory {
-	public static final String MODID = "gtceinventory";
-	public static final String NAME = "GTCE Inventory";
-	public static final String VERSION = "@VERSION@";
+    public static final String MODID = "gtceinventory";
+    public static final String NAME = "GTCE Inventory";
+    public static final String VERSION = "@VERSION@";
 
-	public static final Logger LOGGER = LogManager.getLogger(MODID);
+    public static final Logger LOGGER = LogManager.getLogger(MODID);
 
-	public GTCEInventory() {
-	}
+    public GTCEInventory() {
+    }
 
     @SidedProxy(modId = GTCEInventory.MODID, clientSide = "gtceinventory.common.ClientProxy", serverSide = "gtceinventory.common.CommonProxy")
     public static CommonProxy proxy;
@@ -54,10 +54,10 @@ public class GTCEInventory {
 	public void preInit(FMLPreInitializationEvent event) {
 	    GTCEInventoryCapabilityManager.init();
         GTCEInventoryMetaBlocks.init();
-		GTCEInventoryMetaItems.init();
+        GTCEInventoryMetaItems.init();
         GTCEInventoryMetaTileEntities.init();
-		proxy.onPreLoad();
-		MinecraftForge.EVENT_BUS.register(this);
+        proxy.onPreLoad();
+        MinecraftForge.EVENT_BUS.register(this);
 	}
 
     @Mod.EventHandler
