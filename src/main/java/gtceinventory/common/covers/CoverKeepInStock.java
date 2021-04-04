@@ -18,9 +18,7 @@
 package gtceinventory.common.covers;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.render.CCRenderState;
@@ -50,9 +48,8 @@ import gregtech.api.metatileentity.multiblock.RecipeMapMultiblockController;
 import gregtech.api.recipes.CountableIngredient;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMap;
-import gregtech.api.recipes.RecipeMaps;
 import gregtech.api.render.Textures;
-import gregtech.api.util.GTUtility;
+import gregtech.api.unification.stack.ItemAndMetadata;
 import gregtech.api.util.ItemStackKey;
 import gregtech.common.covers.filter.ItemFilterWrapper;
 import gregtech.common.covers.filter.SimpleItemFilter;
@@ -63,9 +60,7 @@ import gtceinventory.api.capability.GTCEInventoryCapabilities;
 import gtceinventory.api.capability.IStorageNetwork;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
@@ -73,7 +68,6 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ITickable;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -89,15 +83,17 @@ import net.minecraftforge.items.ItemStackHandler;
 public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITickable, IControllable {
 
     public final int tier;
+    public final long EUt;
     public final int maxItemTransferRate;
     protected int transferRate;
     protected int itemsLeftToTransferLastSecond;
     protected boolean isWorkingAllowed = true;
     protected final ItemFilterWrapper itemFilter;
 
-    public CoverKeepInStock(ICoverable coverable, EnumFacing attachedSide, int tier, int itemsPerSecond) {
+    public CoverKeepInStock(final ICoverable coverable, final EnumFacing attachedSide, final int tier, final int itemsPerSecond) {
         super(coverable, attachedSide);
         this.tier = tier;
+        this.EUt = GTValues.V[tier];
         this.maxItemTransferRate = itemsPerSecond;
         this.transferRate = maxItemTransferRate;
         this.itemsLeftToTransferLastSecond = transferRate;
@@ -194,11 +190,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
                 }
                 // Not enough in stock, find a recipe
                 final RecipeMap<?> recipeMap = recipeLogic.recipeMap;
-                Collection<Recipe> recipeList = recipeMap.getRecipeList();
-                // Furnaces are special
-                if (recipeMap == RecipeMaps.FURNACE_RECIPES) {
-                    recipeList = getFurnaceRecipes();
-                }
+                final List<Recipe> recipeList = RecipeMapCache.getRecipeMapCache(recipeMap).getRecipes(requested);
                 for (Recipe recipe : recipeList) {
                     if (tryRecipe(requested, recipe, myStorageNetwork, itemHandler, itemsLeftToTransferLastSecond)) {
                         // Only do one keep in stock per cycle
@@ -214,26 +206,25 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         }
     }
 
-    protected boolean tryRecipe(ItemStack requested, Recipe recipe, IStorageNetwork sourceInventory, IItemHandler targetInventory, int maxTransferAmount) {
-        final NonNullList<ItemStack> outputs = recipe.getOutputs();
-        for (ItemStack output : outputs) {
-            if (equalsItemAndMetaData(requested, output)) {
-                final List<CountableIngredient> ingredients = recipe.getInputs();
+    protected boolean tryRecipe(final ItemStack requested, final Recipe recipe, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, int maxTransferAmount) {
+        // Wrong tier
+        if (recipe.getEUt() > this.EUt)
+            return false;
 
-                // First simulate the movement to make sure we can do it
-                int transfered = tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, true);
-                // Seems to work so do it for real
-                if (transfered > 0) {
-                    // TODO don't recalculate again, use the ingredients we found when simulating
-                    itemsLeftToTransferLastSecond -= tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, false);
-                    return true;
-                }
-            }
+        final List<CountableIngredient> ingredients = recipe.getInputs();
+
+        // First simulate the movement to make sure we can do it
+        int transfered = tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, true);
+        // Seems to work so do it for real
+        if (transfered > 0) {
+            // TODO don't recalculate again, use the ingredients we found when simulating
+            itemsLeftToTransferLastSecond -= tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, false);
+            return true;
         }
         return false;
     }
 
-    protected int tryIngredients(List<CountableIngredient> ingredients, IStorageNetwork sourceInventory, IItemHandler targetInventory, int maxTransferAmount, boolean simulate) {
+    protected int tryIngredients(final List<CountableIngredient> ingredients, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, final int maxTransferAmount, boolean simulate) {
         int itemsLeftToTransfer = maxTransferAmount;
 
         for (CountableIngredient ingredient : ingredients) {
@@ -258,7 +249,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         return maxTransferAmount - itemsLeftToTransfer;
     }
 
-    protected int tryMatchingStacks(ItemStack[] matchingStacks, int amount, IStorageNetwork sourceInventory, IItemHandler targetInventory, boolean simulate) {
+    protected int tryMatchingStacks(final ItemStack[] matchingStacks, final int amount, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, boolean simulate) {
         for (ItemStack itemStack : matchingStacks) {
             final ItemStackKey key = new ItemStackKey(itemStack);
             final int extracted = sourceInventory.extractItem(key, amount, simulate);
@@ -305,55 +296,21 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         return maxTransferAmount - itemsLeftToTransfer;
     }
 
-    static List<ItemStack> ignoredStacks = new ArrayList<>();
+    // TODO Handle this based on the recipes found
+    static List<ItemAndMetadata> IGNORED_STACKS = new ArrayList<>();
     
     {
-        ignoredStacks.add(MetaItems.INTEGRATED_CIRCUIT.getStackForm());
+        IGNORED_STACKS.add(new ItemAndMetadata(MetaItems.INTEGRATED_CIRCUIT.getStackForm()));
         for (MetaItem<?>.MetaValueItem mold : MetaItems.SHAPE_MOLDS) {
-            ignoredStacks.add(mold.getStackForm());
+            IGNORED_STACKS.add(new ItemAndMetadata(mold.getStackForm()));
         }
         for (MetaItem<?>.MetaValueItem shape : MetaItems.SHAPE_EXTRUDERS) {
-            ignoredStacks.add(shape.getStackForm());
+            IGNORED_STACKS.add(new ItemAndMetadata(shape.getStackForm()));
         }
     }
     
-    static boolean isIgnoredStack(ItemStack stack) {
-        for (ItemStack ignored : ignoredStacks) {
-            if (equalsItemAndMetaData(stack, ignored))
-                return true;
-        }
-        return false;
-    }
-    
-    static List<Recipe> furnaceRecipes = new ArrayList<Recipe>();
-            
-    static List<Recipe> getFurnaceRecipes() {
-        if (!furnaceRecipes.isEmpty())
-            return furnaceRecipes;
-        for (Entry<ItemStack, ItemStack> furnaceRecipe : FurnaceRecipes.instance().getSmeltingList().entrySet()) {
-            if (furnaceRecipe.getKey() != null && furnaceRecipe.getValue() != null) {
-                Recipe recipe = RecipeMaps.FURNACE_RECIPES.recipeBuilder()
-                        .inputs(GTUtility.copyAmount(1, furnaceRecipe.getKey()))
-                        .outputs(furnaceRecipe.getValue())
-                        .duration(128).EUt(4)
-                        .build().getResult();
-                furnaceRecipes.add(recipe);
-            }
-        }
-        return furnaceRecipes;
-    }
-    
-    // Utility method for ItemAndMetaData?
-    public static boolean equalsItemAndMetaData(ItemStack one, ItemStack two) {
-        if (one == two)
-            return true;
-        Item item1 = one.getItem();
-        Item item2 = two.getItem();
-        if (item1.equals(item2) == false)
-            return false;
-        int damage1 = GTUtility.getActualItemDamageFromStack(one);
-        int damage2 = GTUtility.getActualItemDamageFromStack(two);
-        return damage1 == damage2;
+    static boolean isIgnoredStack(final ItemStack stack) {
+        return IGNORED_STACKS.contains(new ItemAndMetadata(stack));
     }
 
     @Override
