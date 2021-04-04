@@ -345,7 +345,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
     }
 
     protected String getUITitle() {
-        return "cover.conveyor.title";
+        return "cover.stock.title";
     }
 
     protected ModularUI buildUI(ModularUI.Builder builder, EntityPlayer player) {

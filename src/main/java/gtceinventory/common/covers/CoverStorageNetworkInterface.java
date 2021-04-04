@@ -293,7 +293,7 @@ public class CoverStorageNetworkInterface extends CoverBehavior implements Cover
     }
 
     protected String getUITitle() {
-        return "cover.conveyor.title";
+        return "cover.interface.title";
     }
 
     protected ModularUI buildUI(ModularUI.Builder builder, EntityPlayer player) {

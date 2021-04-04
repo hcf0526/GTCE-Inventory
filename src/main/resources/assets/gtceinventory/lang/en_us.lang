@@ -1,5 +1,6 @@
 tile.inventory_pipe.name=Inventory Pipe
 
+cover.interface.title=Storage Interface Settings (%s)
 metaitem.interface.module.lv.name=Storage Network Interface (LV)
 metaitem.interface.module.mv.name=Storage Network Interface (MV)
 metaitem.interface.module.hv.name=Storage Network Interface (HV)
@@ -9,6 +10,7 @@ metaitem.interface.module.luv.name=Storage Network Interface (LUV)
 metaitem.interface.module.zpm.name=Storage Network Interface (ZPM)
 metaitem.interface.module.uv.name=Storage Network Interface (UV)
 
+cover.stock.title=Keep In Stock Settings (%s)
 metaitem.stock.module.lv.name=Keep In Stock (LV)
 metaitem.stock.module.mv.name=Keep In Stock (MV)
 metaitem.stock.module.hv.name=Keep In Stock (HV)
