@@ -17,13 +17,14 @@ Not yet released to curseforge.
 * [License](LICENSE)
 * [Minecraft EULA](https://www.minecraft.net/en-us/eula/)
 * [Forge License](https://github.com/MinecraftForge/MinecraftForge/blob/1.16.x/LICENSE.txt)
+* [GTCE License](https://github.com/GregTechCE/GregTech/blob/master/LICENSE)
 * [Contributors](CONTRIBUTORS)
 
 ## About
 
 A resurrection of Gregtech Community Edition's Inventory Pipes.
 
-It is planned that these features eventually end up in Gregtech Community Edition (GTCE) itself.
+It is planned that these features eventually end up in Gregtech Community Edition [GTCE](https://github.com/GregTechCE/GregTech) itself.
 
 # Networks
 
