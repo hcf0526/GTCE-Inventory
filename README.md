@@ -65,7 +65,10 @@ The cover checks the configured item's stock level within the storage network.
 
 It automatically uses the recipes of the machine to make new items when there is not enough in stock.
 
-TODO: limitations 
+Limitations:
+* To be consistent with covers and robot arms, the keep in stock cover can't handle recipes that have more items than it can move per second
+* The maximum amount to keep in stock is 8 items per tier, i.e. 8 for LV, 16 for MV, etc.
+* The cover can only handle recipes according to its tier. e.g. an MV cover is required for MV recipes.
 
 # Multiblocks
 
