@@ -118,81 +118,91 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
 
     @Override
     public void update() {
-        long timer = coverHolder.getTimer();
+        final long timer = coverHolder.getTimer();
         try
         {
-            if (timer % 5 == 0 && isWorkingAllowed && itemsLeftToTransferLastSecond > 0) {
-                TileEntity tileEntity = coverHolder.getWorld().getTileEntity(coverHolder.getPos().offset(attachedSide));
-                if (tileEntity == null)
-                    return;
-                IItemHandler itemHandler = tileEntity == null ? null : tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, attachedSide.getOpposite());
-                if (itemHandler == null)
-                    return;
-                TileEntity workableTileEntity = tileEntity;
-                // For a multiblock, lets try to use its controller
-                if (tileEntity instanceof MetaTileEntityHolder) {
-                    MetaTileEntity metaTileEntity = ((MetaTileEntityHolder) tileEntity).getMetaTileEntity();
-                    if (metaTileEntity != null && metaTileEntity instanceof MetaTileEntityMultiblockPart)
-                    {
-                        MultiblockControllerBase controller = ((MetaTileEntityMultiblockPart) metaTileEntity).getController();
-                        if (controller != null && controller instanceof RecipeMapMultiblockController && controller.isStructureFormed())
-                            workableTileEntity = (TileEntity) controller.getHolder();
-                    }
+            if (timer % 5 != 0 || !isWorkingAllowed || itemsLeftToTransferLastSecond <= 0) {
+                return;
+            }
+            final TileEntity tileEntity = coverHolder.getWorld().getTileEntity(coverHolder.getPos().offset(attachedSide));
+            if (tileEntity == null) {
+                return;
+            }
+            final IItemHandler itemHandler = tileEntity == null ? null : tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, attachedSide.getOpposite());
+            if (itemHandler == null) {
+                return;
+            }
+            TileEntity workableTileEntity = tileEntity;
+            // For a multiblock, lets try to use its controller
+            if (tileEntity instanceof MetaTileEntityHolder) {
+                final MetaTileEntity metaTileEntity = ((MetaTileEntityHolder) tileEntity).getMetaTileEntity();
+                if (metaTileEntity != null && metaTileEntity instanceof MetaTileEntityMultiblockPart)
+                {
+                    final MultiblockControllerBase controller = ((MetaTileEntityMultiblockPart) metaTileEntity).getController();
+                    if (controller != null && controller instanceof RecipeMapMultiblockController && controller.isStructureFormed())
+                        workableTileEntity = (TileEntity) controller.getHolder();
                 }
-                IWorkable workable = workableTileEntity == null ? null : workableTileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE, attachedSide.getOpposite());
-                if (workable == null)
-                    return;
-                if (workable instanceof AbstractRecipeLogic  == false)
-                    return;
-                AbstractRecipeLogic recipeLogic = (AbstractRecipeLogic) workable;
-                IStorageNetwork myStorageNetwork = coverHolder.getCapability(GTCEInventoryCapabilities.CAPABILITY_STORAGE_NETWORK, attachedSide);
-                if (myStorageNetwork == null)
-                    return;
+            }
+            final IWorkable workable = workableTileEntity == null ? null : workableTileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE, attachedSide.getOpposite());
+            if (workable == null) {
+                return;
+            }
+            if (workable instanceof AbstractRecipeLogic  == false) {
+                return;
+            }
+            final AbstractRecipeLogic recipeLogic = (AbstractRecipeLogic) workable;
+            final IStorageNetwork myStorageNetwork = coverHolder.getCapability(GTCEInventoryCapabilities.CAPABILITY_STORAGE_NETWORK, attachedSide);
+            if (myStorageNetwork == null) {
+                return;
+            }
 
-                // First cleanup the outputs
-                this.itemsLeftToTransferLastSecond -= cleanUpOutputs(itemHandler, myStorageNetwork, itemsLeftToTransferLastSecond);
-                // Have we finished for this cycle?
-                if (this.itemsLeftToTransferLastSecond <= 0)
-                    return;
+            // First cleanup the outputs
+            this.itemsLeftToTransferLastSecond -= cleanUpOutputs(itemHandler, myStorageNetwork, itemsLeftToTransferLastSecond);
+            // Have we finished for this cycle?
+            if (this.itemsLeftToTransferLastSecond <= 0)
+                return;
 
-                // TODO: Need to keep track of ongoing requests when doing keep in stock
-                // For now, don't do keep in stock when the machine is busy
-                if (workable.isActive())
-                    return;
-                
-                // Or there is something in the inventory
-                // Not including known nonconsumed items
-                for (int slot=0; slot < itemHandler.getSlots(); ++slot) {
-                    ItemStack stack = itemHandler.getStackInSlot(slot);
-                    if (stack.isEmpty() || isIgnoredStack(stack))
-                        continue;
-                    return;
+            // TODO: Need to keep track of ongoing requests when doing keep in stock
+            // For now, don't do keep in stock when the machine is busy
+            if (workable.isActive())
+                return;
+
+            // Or there is something in the inventory
+            // Not including known nonconsumed items
+            for (int slot=0; slot < itemHandler.getSlots(); ++slot) {
+                final ItemStack stack = itemHandler.getStackInSlot(slot);
+                if (stack.isEmpty() || isIgnoredStack(stack)) {
+                    continue;
                 }
+                return;
+            }
 
-                // Now go through the keep in stock
-                ItemStackHandler slots = ((SimpleItemFilter) itemFilter.getItemFilter()).getItemFilterSlots();
-                for (int i = 0; i < slots.getSlots(); ++i) {
-                    ItemStack requested = slots.getStackInSlot(i);
-                    if (requested == null || requested.isEmpty())
-                        continue;
-                    // Do we have enough in stock?
-                    int inStock = 0;
-                    IItemInfo itemInfo = myStorageNetwork.getItemInfo(new ItemStackKey(requested));
-                    if (itemInfo != null)
-                        inStock = itemInfo.getTotalItemAmount();
-                    if (inStock < requested.getCount()) {
-                        // Not enough in stock, find a recipe
-                        RecipeMap<?> recipeMap = recipeLogic.recipeMap;
-                        Collection<Recipe> recipeList = recipeMap.getRecipeList(); 
-                        // Furnaces are special
-                        if (recipeMap == RecipeMaps.FURNACE_RECIPES)
-                            recipeList = getFurnaceRecipes();
-                        for (Recipe recipe : recipeList) {
-                            if (tryRecipe(requested, recipe, myStorageNetwork, itemHandler, itemsLeftToTransferLastSecond)) {
-                                // Only do one keep in stock per cycle
-                                return;
-                            }
-                        }
+            // Now go through the keep in stock
+            final ItemStackHandler slots = ((SimpleItemFilter) itemFilter.getItemFilter()).getItemFilterSlots();
+            for (int i = 0; i < slots.getSlots(); ++i) {
+                final ItemStack requested = slots.getStackInSlot(i);
+                if (requested == null || requested.isEmpty()) {
+                    continue;
+                }
+                // Do we have enough in stock?
+                int inStock = 0;
+                IItemInfo itemInfo = myStorageNetwork.getItemInfo(new ItemStackKey(requested));
+                if (itemInfo != null)
+                    inStock = itemInfo.getTotalItemAmount();
+                if (inStock >= requested.getCount()) {
+                    continue;
+                }
+                // Not enough in stock, find a recipe
+                final RecipeMap<?> recipeMap = recipeLogic.recipeMap;
+                Collection<Recipe> recipeList = recipeMap.getRecipeList();
+                // Furnaces are special
+                if (recipeMap == RecipeMaps.FURNACE_RECIPES) {
+                    recipeList = getFurnaceRecipes();
+                }
+                for (Recipe recipe : recipeList) {
+                    if (tryRecipe(requested, recipe, myStorageNetwork, itemHandler, itemsLeftToTransferLastSecond)) {
+                        // Only do one keep in stock per cycle
+                        return;
                     }
                 }
             }
@@ -205,10 +215,10 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
     }
 
     protected boolean tryRecipe(ItemStack requested, Recipe recipe, IStorageNetwork sourceInventory, IItemHandler targetInventory, int maxTransferAmount) {
-        NonNullList<ItemStack> outputs = recipe.getOutputs();
+        final NonNullList<ItemStack> outputs = recipe.getOutputs();
         for (ItemStack output : outputs) {
             if (equalsItemAndMetaData(requested, output)) {
-                List<CountableIngredient> ingredients = recipe.getInputs();
+                final List<CountableIngredient> ingredients = recipe.getInputs();
 
                 // First simulate the movement to make sure we can do it
                 int transfered = tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, true);
@@ -227,17 +237,20 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         int itemsLeftToTransfer = maxTransferAmount;
 
         for (CountableIngredient ingredient : ingredients) {
-            int amount = ingredient.getCount();
+            final int amount = ingredient.getCount();
             // Ingredient is not consumed in recipe
-            if (amount == 0)
+            if (amount == 0) {
                 continue;
+            }
             // Can't do it this cycle
-            if (amount > itemsLeftToTransfer)
+            if (amount > itemsLeftToTransfer) {
                 return 0;
-            int transfered = tryMatchingStacks(ingredient.getIngredient().getMatchingStacks(), amount, sourceInventory, targetInventory, simulate);
+            }
+            final int transfered = tryMatchingStacks(ingredient.getIngredient().getMatchingStacks(), amount, sourceInventory, targetInventory, simulate);
             // Didn't work
-            if (transfered <= 0)
+            if (transfered <= 0) {
                 return 0;
+            }
 
             itemsLeftToTransfer -= transfered;
         }
@@ -247,17 +260,19 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
 
     protected int tryMatchingStacks(ItemStack[] matchingStacks, int amount, IStorageNetwork sourceInventory, IItemHandler targetInventory, boolean simulate) {
         for (ItemStack itemStack : matchingStacks) {
-            ItemStackKey key = new ItemStackKey(itemStack);
-            int extracted = sourceInventory.extractItem(key, amount, simulate);
+            final ItemStackKey key = new ItemStackKey(itemStack);
+            final int extracted = sourceInventory.extractItem(key, amount, simulate);
             // Not enough of this ingredient
-            if (extracted != amount)
+            if (extracted != amount) {
                 continue;
-            ItemStack sourceStack = key.getItemStack();
+            }
+            final ItemStack sourceStack = key.getItemStack();
             sourceStack.setCount(extracted);
-            ItemStack remainder = ItemHandlerHelper.insertItemStacked(targetInventory, sourceStack, simulate);
+            final ItemStack remainder = ItemHandlerHelper.insertItemStacked(targetInventory, sourceStack, simulate);
             // Not accepting this ingredient
-            if (remainder.getCount() != 0)
+            if (remainder.getCount() != 0) {
                 continue;
+            }
 
             // This ingredient has enough and will go in the machine
             return extracted;
@@ -273,8 +288,8 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
             if (sourceStack.isEmpty()) {
                 continue;
             }
-            ItemStackKey sourceStackKey = new ItemStackKey(sourceStack);
-            int amountToInsert = targetInventory.insertItem(sourceStackKey, sourceStack.getCount(), true);
+            final ItemStackKey sourceStackKey = new ItemStackKey(sourceStack);
+            final int amountToInsert = targetInventory.insertItem(sourceStackKey, sourceStack.getCount(), true);
 
             if (amountToInsert > 0) {
                 sourceStack = sourceInventory.extractItem(srcIndex, amountToInsert, false);
@@ -382,7 +397,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
 
     @Override
     public ModularUI createUI(EntityPlayer player) {
-        WidgetGroup primaryGroup = new WidgetGroup();
+        final WidgetGroup primaryGroup = new WidgetGroup();
         primaryGroup.addWidget(new LabelWidget(10, 5, getUITitle(), GTValues.VN[tier]));
         primaryGroup.addWidget(new ClickButtonWidget(10, 20, 20, 20, "-10", data -> adjustTransferRate(data.isShiftClick ? -100 : -10)));
         primaryGroup.addWidget(new ClickButtonWidget(146, 20, 20, 20, "+10", data -> adjustTransferRate(data.isShiftClick ? +100 : +10)));
@@ -393,7 +408,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
 
         this.itemFilter.initUI(70, primaryGroup::addWidget);
 
-        ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176, 190 + 82)
+        final ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176, 190 + 82)
             .widget(primaryGroup)
             .bindPlayerInventory(player.inventory, GuiTextures.SLOT, 8, 190);
         return buildUI(builder, player);
@@ -414,7 +429,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         super.writeToNBT(tagCompound);
         tagCompound.setInteger("TransferRate", transferRate);
         tagCompound.setBoolean("WorkingAllowed", isWorkingAllowed);
-        NBTTagCompound filterNBT = new NBTTagCompound();
+        final NBTTagCompound filterNBT = new NBTTagCompound();
         this.itemFilter.getItemFilter().writeToNBT(filterNBT);
         tagCompound.setTag("Filter", filterNBT);
     }
@@ -423,7 +438,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
     public void readFromNBT(NBTTagCompound tagCompound) {
         super.readFromNBT(tagCompound);
         this.transferRate = tagCompound.getInteger("TransferRate");
-        NBTTagCompound filterNBT = tagCompound.getCompoundTag("Filter");
+        final NBTTagCompound filterNBT = tagCompound.getCompoundTag("Filter");
         this.itemFilter.getItemFilter().readFromNBT(filterNBT);
     }
 }
