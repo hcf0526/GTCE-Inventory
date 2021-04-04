@@ -24,6 +24,7 @@ import gregtech.api.pipenet.Node;
 import gregtech.api.pipenet.PipeNet;
 import gregtech.api.pipenet.WorldPipeNet;
 import gregtech.api.pipenet.block.simple.EmptyNodeData;
+import gtceinventory.common.GTCEInventoryConfig;
 import gtceinventory.common.pipelike.inventory.network.ItemStorageNetwork;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -41,13 +42,25 @@ public class InventoryPipeNet extends PipeNet<EmptyNodeData> implements ITickabl
     @SuppressWarnings("rawtypes")
     public InventoryPipeNet(WorldPipeNet<EmptyNodeData, ? extends PipeNet> world) {
         super(world);
-        this.energyContainer = new InventoryPipeNetEnergyContainer();
+        this.energyContainer = new InventoryPipeNetEnergyContainer(this);
     }
 
     @Override
     public void update() {
         ItemStorageNetwork storageNetwork = getStorageNetwork();
         storageNetwork.update();
+        if (GTCEInventoryConfig.energyPerNetwork > 0) {
+            this.energyContainer.removeEnergy(GTCEInventoryConfig.energyPerNetwork);
+        }
+        if (GTCEInventoryConfig.energyPerPipe > 0) {
+            getEnergyContainer().removeEnergy(getAllNodes().size() * GTCEInventoryConfig.energyPerPipe);
+        }
+    }
+
+    void markDirty() {
+        if (this.worldData != null) {
+            this.worldData.markDirty();
+        }
     }
 
     @Override

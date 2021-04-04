@@ -29,12 +29,16 @@ import gtceinventory.common.items.GTCEInventoryMetaItems;
 import gtceinventory.common.metatileentities.GTCEInventoryMetaTileEntities;
 import gtceinventory.integration.multipart.GTCEInventoryMultipartFactory;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Optional.Method;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 @Mod(modid = GTCEInventory.MODID, name = GTCEInventory.NAME, version = GTCEInventory.VERSION, dependencies = "required-after:gregtech@[1.13.0.681,)")
 public class GTCEInventory {
@@ -64,6 +68,13 @@ public class GTCEInventory {
     public void onInit(FMLInitializationEvent event) {
         proxy.onLoad();
         GTCEInventoryCoverBehaviors.init();
+    }
+
+    @SubscribeEvent
+    public void onConfigChangedEvent(final ConfigChangedEvent.OnConfigChangedEvent event) {
+        if (event.getModID().equals(MODID)) {
+            ConfigManager.sync(MODID, Config.Type.INSTANCE);
+        }
     }
 
     @Method(modid = GTValues.MODID_FMP)

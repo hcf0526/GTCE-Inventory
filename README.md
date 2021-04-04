@@ -40,7 +40,8 @@ Each storage network requires power. This can be achieved in the usual ways;
 * Pointing a generator's output at an inventory pipe
 * Placing a solar panel on top of one of the inventory pipes
 
-TODO: configurable power costs
+In config/gtceinventory.cfg you can set the energy cost for each network, pipe, move operation or individual item moved.
+<br> The default is 1 EU per second per network and 1 EU per item inserted or extracted.
 
 # Crafting
 
@@ -48,7 +49,7 @@ There is a modified version of the GTCE crafting station that lets you craft usi
 
 Simply place the crafting station next to one of the inventory pipes.
 
-A tab within the crafting station let's you see (and use) the consolidated inventories of the connected storage network(s).
+A additional tab within the crafting station let's you see (and use) the consolidated inventories of the connected storage network(s).
 
 # Interface
 

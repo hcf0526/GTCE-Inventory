@@ -31,13 +31,13 @@ import gregtech.common.inventory.itemsource.ItemSourceList;
 import gregtech.common.inventory.itemsource.sources.TileItemSource;
 import gregtech.common.pipelike.inventory.network.UpdateResult;
 import gtceinventory.api.capability.IStorageNetwork;
+import gtceinventory.common.GTCEInventoryConfig;
 import gtceinventory.common.pipelike.inventory.net.InventoryPipeNet;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
 public class ItemStorageNetwork extends ItemSourceList implements IStorageNetwork {
 
-    // Review: stop CCME
     private final Map<SidedBlockPos, TileItemSource> handlerInfoMap = new ConcurrentHashMap<>();
 
     private final InventoryPipeNet pipeNet;
@@ -150,41 +150,22 @@ public class ItemStorageNetwork extends ItemSourceList implements IStorageNetwor
             this.handlerInfoMap.remove(handlerPosition((TileItemSource) handlerInfo));
         }
     }
-/*
-    @Override
-    protected int preInsert(ItemStackKey key, int amount, boolean simulate, InsertMode insertMode) {
-        return checkEnergy(amount);
+
+    protected long calculateEnergy(final long amount) {
+        if (amount > 0 && (GTCEInventoryConfig.energyPerOperation > 0 || GTCEInventoryConfig.energyPerItem > 0)) {
+           return GTCEInventoryConfig.energyPerOperation + amount * GTCEInventoryConfig.energyPerItem;
+        }
+        return 0;
     }
 
-    @Override
-    protected int postInsert(ItemStackKey key, int amount, boolean simulate, InsertMode insertMode) {
-        if (!simulate)
-            drainEnergy(amount);
-        return amount;
-    }
-
-    @Override
-    protected int preExtract(ItemStackKey key, int amount, boolean simulate) {
-        return checkEnergy(amount);
-    }
-
-    @Override
-    protected int postExtract(ItemStackKey key, int amount, boolean simulate) {
-        if (!simulate)
-            drainEnergy(amount);
-        return amount;
-    }
-*/
-    private final long energyPerOp = 1L;
-
-    protected int checkEnergy(int amount) {
-        if (pipeNet.getEnergyContainer().getEnergyStored() < energyPerOp)
+    protected int checkEnergy(final int amount) {
+        if (pipeNet.getEnergyContainer().getEnergyStored() < calculateEnergy(amount))
             return 0;
         return amount;
     }
 
-    protected void drainEnergy(int amount) {
-        pipeNet.getEnergyContainer().removeEnergy(energyPerOp);
+    protected void drainEnergy(final int amount) {
+        pipeNet.getEnergyContainer().removeEnergy(calculateEnergy(amount));
     }
 
     private static SidedBlockPos handlerPosition(TileItemSource handlerInfo) {

@@ -26,11 +26,18 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
 
     public static final long PER_PIPE_CAPACITY = 256L;
 
+    private final InventoryPipeNet pipeNet;
+
     private long capacity = 0L;
     private long energyStored = 0L;
 
+    public InventoryPipeNetEnergyContainer(final InventoryPipeNet pipeNet) {
+        this.pipeNet = pipeNet;
+    }
+
     public void setEnergyStored(final long energyStored) {
         this.energyStored = energyStored;
+        this.pipeNet.markDirty();
     }
 
     @Override
@@ -80,7 +87,6 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
 
     @Override
     public long getInputVoltage() {
-        // Review: Accept any voltage, really constrained by number of pipes?
         return Long.MAX_VALUE;
     }
 
@@ -100,6 +106,7 @@ public class InventoryPipeNetEnergyContainer implements IEnergyContainer, INBTSe
 
     public void updateEnergyCapacity(final long newEnergyCapacity) {
         this.capacity = newEnergyCapacity;
-        this.energyStored = Math.min(this.energyStored, this.capacity);
+        setEnergyStored(Math.min(this.energyStored, this.capacity));
+        this.pipeNet.markDirty();
     }
 }
