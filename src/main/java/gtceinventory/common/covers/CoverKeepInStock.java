@@ -86,7 +86,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
  */
 public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITickable, IControllable {
 
-    private final int KEEP_IN_STOCK_SIZE = 16;
+    private final int KEEP_IN_STOCK_SIZE = 6;
 
     public final int tier;
     private final int slotLimit;

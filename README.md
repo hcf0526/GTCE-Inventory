@@ -72,9 +72,11 @@ There is some special handling for recipe selectors like integrated circuits, mo
 Limitations:
 * To be consistent with covers and robot arms, the keep in stock cover can't handle recipes that have more items than it can move per second
 * The maximum amount to keep in stock is 8 items per tier, i.e. 8 for LV, 16 for MV, etc.
-* You can have a total of 16 item types to keep in stock per cover
+* You can have a total of 16 item types to keep in stock per cover (1)
 * The cover can only handle recipes according to its tier. e.g. an MV cover is required for MV recipes.
 * The cover does not handle fluids, it assumes you know what you are doing with recipes that involve fluids
+
+Note (1): This has temporarily been reduced to 6 until [this bug has been fixed](https://github.com/GregTechCE/GregTech/pull/1558)
 
 Statuses:
 * Fully in stock - the storage network has enough of the configured item
