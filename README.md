@@ -50,30 +50,55 @@ There is a modified version of the GTCE crafting station that lets you craft usi
 
 Simply place the crafting station next to one of the inventory pipes.
 
-A additional tab within the crafting station let's you see (and use) the consolidated inventories of the connected storage network(s).
+An additional tab within the crafting station let's you see (and use) the consolidated inventories of the connected storage network(s).
 
 # Interface
 
-A new cover called a "Storage Network Interface" lets you move items between your storage network and machines.
+A cover called a "Storage Network Interface" lets you move items between your storage network and machines or other inventories.
 
 This cover works exactly like a GTCE conveyor, except you place it on an inventory pipe next to the machine, rather than on the machine.
 
 # KeepInStock
 
-A new "Keep In Stock" cover lets you configure stock levels for items made in the adjacent machine.
+A "Keep In Stock" cover lets you configure stock levels for items made in the adjacent machine.
 
 The cover checks the configured item's stock level within the storage network.
 
 It automatically uses the recipes of the machine to make new items when there is not enough in stock.
 
+There is some special handling for recipe selectors like integrated circuits, molds and shapes, but it is not very intelligent.
+<br>In general you should preconfigure a machine with a recipe selector and only configure items that have recipes with that selector or no selector.
+
 Limitations:
 * To be consistent with covers and robot arms, the keep in stock cover can't handle recipes that have more items than it can move per second
 * The maximum amount to keep in stock is 8 items per tier, i.e. 8 for LV, 16 for MV, etc.
+* You can have a total of 16 item types to keep in stock per cover
 * The cover can only handle recipes according to its tier. e.g. an MV cover is required for MV recipes.
+* The cover does not handle fluids, it assumes you know what you are doing with recipes that involve fluids
+
+Statuses:
+* Fully in stock - the storage network has enough of the configured item
+* Processing - the machine is currently processing this item
+* Machine is busy - the machine is busy with a different item
+* Cleaning outputs - the outputs of the machine are being moved into the storage network
+* No machine - there is no adjacent valid GTCE machine that can accept recipes
+* Inventory is not empty - there is something in the machine's inventories that can't be removed (1)
+* No recipe - there is no recipe for the configured item in the adjacent machine
+* Not enough ingredients - the storage network doesn't contain the required ingredients (1)
+* Not accepting inputs - the machine is not accepting the recipe's ingredients for some reason (1)
+* Too many items in recipe - the recipe has too many items for the cover's tier
+* Wrong tier for recipe - the recipe is for a tier larger than the cover
+
+Note (1): Some possible reasons it can't add/remove items from a machine or see ingredients for recipes are:
+* The inventory pipes have no power
+* There is something in the machine's input inventory, probably because the machine has no power to process it
+* There is not enough space in the inventories connected to the inventory pipes to receive outputs
 
 # Multiblocks
 
 The covers also work with multiblocks. You place the cover on an inventory pipe next to the relevant input or output item bus.
+
+When using a keep in stock cover on an input bus, you will need a storage network interface (in import mode) on the output bus to move recipe results back into your storage. Or you can just put an inventory pipe next to the output bus and use the output bus as your storage.
 
 ## Translations
 To make your own translation, add a resource pack with an assets/gtceinventory/lang/xx_yy.lang

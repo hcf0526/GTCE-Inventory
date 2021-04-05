@@ -350,18 +350,10 @@ public class CoverStorageNetworkInterface extends CoverBehavior implements Cover
         super.readFromNBT(tagCompound);
         this.transferRate = tagCompound.getInteger("TransferRate");
         this.interfaceMode = InterfaceMode.values()[tagCompound.getInteger("InterfaceMode")];
-        if(tagCompound.hasKey("FilterInventory")) {
-            this.itemFilterContainer.deserializeNBT(tagCompound);
-        } else {
-            NBTTagCompound filterComponent = tagCompound.getCompoundTag("Filter");
-            this.itemFilterContainer.deserializeNBT(filterComponent);
-        }
-        if(tagCompound.hasKey("WorkingAllowed")) {
-            this.isWorkingAllowed = tagCompound.getBoolean("WorkingAllowed");
-        }
-        if(tagCompound.hasKey("ManualImportExportMode")) {
-            this.manualImportExportMode = ManualImportExportMode.values()[tagCompound.getInteger("ManualImportExportMode")];
-        }
+        this.isWorkingAllowed = tagCompound.getBoolean("WorkingAllowed");
+        this.manualImportExportMode = ManualImportExportMode.values()[tagCompound.getInteger("ManualImportExportMode")];
+        final NBTTagCompound filterComponent = tagCompound.getCompoundTag("Filter");
+        this.itemFilterContainer.deserializeNBT(filterComponent);
     }
 
     public enum InterfaceMode implements IStringSerializable {

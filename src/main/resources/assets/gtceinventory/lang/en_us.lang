@@ -20,4 +20,18 @@ metaitem.stock.module.luv.name=Keep In Stock (LUV)
 metaitem.stock.module.zpm.name=Keep In Stock (ZPM)
 metaitem.stock.module.uv.name=Keep In Stock (UV)
 
+keep.in.stock.status.busy=Machine is busy
+keep.in.stock.status.cleaning=Cleaning outputs
+keep.in.stock.status.instock=Fully in stock
+keep.in.stock.status.inventory=Inventory is not empty
+# This is meant to be blank (na = not applicable, if you want something to appear for this status)
+keep.in.stock.status.na=
+keep.in.stock.status.noaccept=Not accepting inputs
+keep.in.stock.status.noingredients=Not enough ingredients
+keep.in.stock.status.nomachine=No machine
+keep.in.stock.status.norecipe=No recipe
+keep.in.stock.status.processing=Processing
+keep.in.stock.status.toobig=Too many items in recipe
+keep.in.stock.status.wrongtier=Wrong tier for recipe
+
 gtceinventory.machine.workbench.name=Crafting Station

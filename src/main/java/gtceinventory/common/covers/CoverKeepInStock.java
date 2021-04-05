@@ -20,6 +20,8 @@ package gtceinventory.common.covers;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
@@ -35,9 +37,12 @@ import gregtech.api.cover.CoverWithUI;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.gui.widgets.AdvancedTextWidget;
 import gregtech.api.gui.widgets.ClickButtonWidget;
 import gregtech.api.gui.widgets.ImageWidget;
 import gregtech.api.gui.widgets.LabelWidget;
+import gregtech.api.gui.widgets.PhantomSlotWidget;
+import gregtech.api.gui.widgets.ScrollableListWidget;
 import gregtech.api.gui.widgets.SimpleTextWidget;
 import gregtech.api.gui.widgets.WidgetGroup;
 import gregtech.api.items.metaitem.MetaItem;
@@ -51,8 +56,8 @@ import gregtech.api.recipes.RecipeMap;
 import gregtech.api.render.Textures;
 import gregtech.api.unification.stack.ItemAndMetadata;
 import gregtech.api.util.ItemStackKey;
-import gregtech.common.covers.filter.ItemFilterWrapper;
-import gregtech.common.covers.filter.SimpleItemFilter;
+import gregtech.api.util.Position;
+import gregtech.api.util.Size;
 import gregtech.common.inventory.IItemInfo;
 import gregtech.common.items.MetaItems;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityMultiblockPart;
@@ -73,7 +78,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.items.ItemStackHandler;
 
 /*
  * This is a cover for something that has the IStorageNetwork capability i.e. an inventory pipe
@@ -82,25 +86,29 @@ import net.minecraftforge.items.ItemStackHandler;
  */
 public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITickable, IControllable {
 
+    private final int KEEP_IN_STOCK_SIZE = 16;
+
     public final int tier;
-    public final long EUt;
-    public final int maxItemTransferRate;
+    private final int slotLimit;
+    private final long EUt;
+    private final int maxItemTransferRate;
     protected int transferRate;
     protected int itemsLeftToTransferLastSecond;
     protected boolean isWorkingAllowed = true;
-    protected final ItemFilterWrapper itemFilter;
+    protected final List<KeepInStockInfo> keepInStockInfos;
 
     public CoverKeepInStock(final ICoverable coverable, final EnumFacing attachedSide, final int tier, final int itemsPerSecond) {
         super(coverable, attachedSide);
         this.tier = tier;
+        this.slotLimit = tier * 8;
         this.EUt = GTValues.V[tier];
         this.maxItemTransferRate = itemsPerSecond;
         this.transferRate = maxItemTransferRate;
         this.itemsLeftToTransferLastSecond = transferRate;
-        // Hack: reusing item filter gui for keep in stock config
-        this.itemFilter = new ItemFilterWrapper(this);
-        this.itemFilter.setItemFilter(new SimpleItemFilter());
-        this.itemFilter.setMaxStackSize(tier*8);
+        this.keepInStockInfos = Lists.newArrayList();
+        for (int i = 0; i < KEEP_IN_STOCK_SIZE; ++i) {
+            keepInStockInfos.add(new KeepInStockInfo(slotLimit));
+        }
     }
 
     protected void setTransferRate(int transferRate) {
@@ -112,20 +120,54 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         setTransferRate(MathHelper.clamp(transferRate + amount, 1, maxItemTransferRate));
     }
 
+    private ItemStack canProcess(final IStorageNetwork storageNetwork, final KeepInStockInfo keepInStockInfo) {
+        final ItemStack requested = keepInStockInfo.getItemStack();
+        if (requested == null || requested.isEmpty()) {
+            keepInStockInfo.setStatus(KeepInStockInfo.NA);
+            return null;
+        }
+        // Do we have enough in stock?
+        int inStock = 0;
+        IItemInfo itemInfo = storageNetwork.getItemInfo(new ItemStackKey(requested));
+        if (itemInfo != null)
+            inStock = itemInfo.getTotalItemAmount();
+        if (inStock >= requested.getCount()) {
+            keepInStockInfo.setStatus(KeepInStockInfo.IN_STOCK);
+            return null;
+        }
+        return requested;
+    }
+
+    private void generalStatus(final IStorageNetwork storageNetwork, final String status) {
+        for (KeepInStockInfo keepInStockInfo : keepInStockInfos) {
+            keepInStockInfo.setStatus(status);
+            // Don't override obvious status with general status
+            canProcess(storageNetwork, keepInStockInfo);
+        }
+    }
+
     @Override
     public void update() {
-        final long timer = coverHolder.getTimer();
+        final long timer = this.coverHolder.getTimer();
         try
         {
-            if (timer % 5 != 0 || !isWorkingAllowed || itemsLeftToTransferLastSecond <= 0) {
+            if (timer % 5 != 0 || !this.isWorkingAllowed || this.itemsLeftToTransferLastSecond <= 0) {
                 return;
             }
-            final TileEntity tileEntity = coverHolder.getWorld().getTileEntity(coverHolder.getPos().offset(attachedSide));
+            final IStorageNetwork myStorageNetwork = this.coverHolder.getCapability(GTCEInventoryCapabilities.CAPABILITY_STORAGE_NETWORK, this.attachedSide);
+            if (myStorageNetwork == null) {
+                // Shouldn't happen?
+                return;
+            }
+
+            final TileEntity tileEntity = this.coverHolder.getWorld().getTileEntity(this.coverHolder.getPos().offset(this.attachedSide));
             if (tileEntity == null) {
+                generalStatus(myStorageNetwork, KeepInStockInfo.NO_MACHINE);
                 return;
             }
-            final IItemHandler itemHandler = tileEntity == null ? null : tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, attachedSide.getOpposite());
+            final IItemHandler itemHandler = tileEntity == null ? null : tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, this.attachedSide.getOpposite());
             if (itemHandler == null) {
+                generalStatus(myStorageNetwork, KeepInStockInfo.NO_MACHINE);
                 return;
             }
             TileEntity workableTileEntity = tileEntity;
@@ -141,27 +183,29 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
             }
             final IWorkable workable = workableTileEntity == null ? null : workableTileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_WORKABLE, attachedSide.getOpposite());
             if (workable == null) {
+                generalStatus(myStorageNetwork, KeepInStockInfo.NO_MACHINE);
                 return;
             }
             if (workable instanceof AbstractRecipeLogic  == false) {
+                generalStatus(myStorageNetwork, KeepInStockInfo.NO_MACHINE);
                 return;
             }
             final AbstractRecipeLogic recipeLogic = (AbstractRecipeLogic) workable;
-            final IStorageNetwork myStorageNetwork = coverHolder.getCapability(GTCEInventoryCapabilities.CAPABILITY_STORAGE_NETWORK, attachedSide);
-            if (myStorageNetwork == null) {
+
+            // First cleanup the outputs
+            this.itemsLeftToTransferLastSecond -= cleanUpOutputs(itemHandler, myStorageNetwork, this.itemsLeftToTransferLastSecond);
+            // Have we finished for this cycle?
+            if (this.itemsLeftToTransferLastSecond <= 0) {
+                generalStatus(myStorageNetwork, KeepInStockInfo.CLEAN_OUTPUTS);
                 return;
             }
 
-            // First cleanup the outputs
-            this.itemsLeftToTransferLastSecond -= cleanUpOutputs(itemHandler, myStorageNetwork, itemsLeftToTransferLastSecond);
-            // Have we finished for this cycle?
-            if (this.itemsLeftToTransferLastSecond <= 0)
-                return;
-
             // TODO: Need to keep track of ongoing requests when doing keep in stock
             // For now, don't do keep in stock when the machine is busy
-            if (workable.isActive())
+            if (workable.isActive()) {
+                generalStatus(myStorageNetwork, KeepInStockInfo.BUSY);
                 return;
+            }
 
             // Or there is something in the inventory
             // Not including known nonconsumed items
@@ -170,31 +214,30 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
                 if (stack.isEmpty() || isIgnoredStack(stack)) {
                     continue;
                 }
+                generalStatus(myStorageNetwork, KeepInStockInfo.INVENTORY);
                 return;
             }
 
             // Now go through the keep in stock
-            final ItemStackHandler slots = ((SimpleItemFilter) itemFilter.getItemFilter()).getItemFilterSlots();
-            for (int i = 0; i < slots.getSlots(); ++i) {
-                final ItemStack requested = slots.getStackInSlot(i);
-                if (requested == null || requested.isEmpty()) {
+            boolean doneSomething = false;
+            for (KeepInStockInfo keepInStockInfo : keepInStockInfos) {
+                final ItemStack requested = canProcess(myStorageNetwork, keepInStockInfo);
+                if (requested == null) {
                     continue;
                 }
-                // Do we have enough in stock?
-                int inStock = 0;
-                IItemInfo itemInfo = myStorageNetwork.getItemInfo(new ItemStackKey(requested));
-                if (itemInfo != null)
-                    inStock = itemInfo.getTotalItemAmount();
-                if (inStock >= requested.getCount()) {
+                // Already done something?
+                if (doneSomething) {
+                    keepInStockInfo.setStatus(KeepInStockInfo.BUSY);
                     continue;
                 }
                 // Not enough in stock, find a recipe
                 final RecipeMap<?> recipeMap = recipeLogic.recipeMap;
                 final List<Recipe> recipeList = RecipeMapCache.getRecipeMapCache(recipeMap).getRecipes(requested);
+                keepInStockInfo.setStatus(KeepInStockInfo.NO_RECIPE);
                 for (Recipe recipe : recipeList) {
-                    if (tryRecipe(requested, recipe, myStorageNetwork, itemHandler, itemsLeftToTransferLastSecond)) {
-                        // Only do one keep in stock per cycle
-                        return;
+                    if (tryRecipe(requested, recipe, myStorageNetwork, keepInStockInfo, itemHandler, itemsLeftToTransferLastSecond)) {
+                        doneSomething = true;
+                        break;
                     }
                 }
             }
@@ -206,25 +249,28 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         }
     }
 
-    protected boolean tryRecipe(final ItemStack requested, final Recipe recipe, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, int maxTransferAmount) {
+    protected boolean tryRecipe(final ItemStack requested, final Recipe recipe, final IStorageNetwork sourceInventory, final KeepInStockInfo keepInStockInfo, final IItemHandler targetInventory, int maxTransferAmount) {
         // Wrong tier
-        if (recipe.getEUt() > this.EUt)
+        if (recipe.getEUt() > this.EUt) {
+            keepInStockInfo.setStatus(KeepInStockInfo.WRONG_TIER);
             return false;
+        }
 
         final List<CountableIngredient> ingredients = recipe.getInputs();
 
         // First simulate the movement to make sure we can do it
-        int transfered = tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, true);
+        int transfered = tryIngredients(ingredients, keepInStockInfo, sourceInventory, targetInventory, maxTransferAmount, true);
         // Seems to work so do it for real
         if (transfered > 0) {
             // TODO don't recalculate again, use the ingredients we found when simulating
-            itemsLeftToTransferLastSecond -= tryIngredients(ingredients, sourceInventory, targetInventory, maxTransferAmount, false);
+            keepInStockInfo.setStatus(KeepInStockInfo.PROCESSING);
+            itemsLeftToTransferLastSecond -= tryIngredients(ingredients, keepInStockInfo, sourceInventory, targetInventory, maxTransferAmount, false);
             return true;
         }
         return false;
     }
 
-    protected int tryIngredients(final List<CountableIngredient> ingredients, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, final int maxTransferAmount, boolean simulate) {
+    protected int tryIngredients(final List<CountableIngredient> ingredients, final KeepInStockInfo keepInStockInfo, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, final int maxTransferAmount, boolean simulate) {
         int itemsLeftToTransfer = maxTransferAmount;
 
         for (CountableIngredient ingredient : ingredients) {
@@ -235,9 +281,10 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
             }
             // Can't do it this cycle
             if (amount > itemsLeftToTransfer) {
+                keepInStockInfo.setStatus(KeepInStockInfo.TOO_BIG);
                 return 0;
             }
-            final int transfered = tryMatchingStacks(ingredient.getIngredient().getMatchingStacks(), amount, sourceInventory, targetInventory, simulate);
+            final int transfered = tryMatchingStacks(ingredient.getIngredient().getMatchingStacks(), amount, keepInStockInfo, sourceInventory, targetInventory, simulate);
             // Didn't work
             if (transfered <= 0) {
                 return 0;
@@ -249,12 +296,15 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         return maxTransferAmount - itemsLeftToTransfer;
     }
 
-    protected int tryMatchingStacks(final ItemStack[] matchingStacks, final int amount, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, boolean simulate) {
+    protected int tryMatchingStacks(final ItemStack[] matchingStacks, final int amount, final KeepInStockInfo keepInStockInfo, final IStorageNetwork sourceInventory, final IItemHandler targetInventory, boolean simulate) {
         for (ItemStack itemStack : matchingStacks) {
             final ItemStackKey key = new ItemStackKey(itemStack);
             final int extracted = sourceInventory.extractItem(key, amount, simulate);
             // Not enough of this ingredient
             if (extracted != amount) {
+                if (simulate) {
+                    keepInStockInfo.setStatus(KeepInStockInfo.NO_INGREDIENTS);
+                }
                 continue;
             }
             final ItemStack sourceStack = key.getItemStack();
@@ -262,6 +312,7 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
             final ItemStack remainder = ItemHandlerHelper.insertItemStacked(targetInventory, sourceStack, simulate);
             // Not accepting this ingredient
             if (remainder.getCount() != 0) {
+                keepInStockInfo.setStatus(KeepInStockInfo.NO_ACCEPT);
                 continue;
             }
 
@@ -361,9 +412,18 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
         primaryGroup.addWidget(new ClickButtonWidget(30, 20, 20, 20, "-1", data -> adjustTransferRate(data.isShiftClick ? -5 : -1)));
         primaryGroup.addWidget(new ClickButtonWidget(126, 20, 20, 20, "+1", data -> adjustTransferRate(data.isShiftClick ? +5 : +1)));
         primaryGroup.addWidget(new ImageWidget(50, 20, 76, 20, GuiTextures.DISPLAY));
-        primaryGroup.addWidget(new SimpleTextWidget(88, 30, "cover.conveyor.transfer_rate", 0xFFFFFF, () -> Integer.toString(transferRate)));
+        primaryGroup.addWidget(new SimpleTextWidget(88, 30, "cover.conveyor.transfer_rate", 0xFFFFFF, () -> Integer.toString(this.transferRate)));
 
-        this.itemFilter.initUI(70, primaryGroup::addWidget);
+        final ScrollableListWidget scrollPanel = new ScrollableListWidget(5, 50, 160, 120);
+        for (int i = 0; i < this.keepInStockInfos.size(); ++i) {
+            KeepInStockInfo keepInStockInfo = this.keepInStockInfos.get(i);
+            final WidgetGroup widgetGroup = new WidgetGroup(new Position(0, 0), new Size(140, 20));
+            widgetGroup.addWidget(new PhantomSlotWidget(keepInStockInfo, 0, 0, 0).setBackgroundTexture(GuiTextures.SLOT));
+            widgetGroup.addWidget(new ImageWidget(25, 0, 120, 20, GuiTextures.DISPLAY));
+            widgetGroup.addWidget(new AdvancedTextWidget(30, 5, keepInStockInfo::displayStatus, 0xFFFFFF));
+            scrollPanel.addWidget(widgetGroup);
+        }
+        primaryGroup.addWidget(scrollPanel);
 
         final ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176, 190 + 82)
             .widget(primaryGroup)
@@ -384,18 +444,33 @@ public class CoverKeepInStock extends CoverBehavior implements CoverWithUI, ITic
     @Override
     public void writeToNBT(NBTTagCompound tagCompound) {
         super.writeToNBT(tagCompound);
-        tagCompound.setInteger("TransferRate", transferRate);
-        tagCompound.setBoolean("WorkingAllowed", isWorkingAllowed);
-        final NBTTagCompound filterNBT = new NBTTagCompound();
-        this.itemFilter.getItemFilter().writeToNBT(filterNBT);
-        tagCompound.setTag("Filter", filterNBT);
+        tagCompound.setInteger("TransferRate", this.transferRate);
+        tagCompound.setBoolean("WorkingAllowed", this.isWorkingAllowed);
+
+        final NBTTagCompound keepInStocks = new NBTTagCompound();
+        for (int i = 0; i < this.keepInStockInfos.size(); ++i) {
+            final KeepInStockInfo keepInStockInfo = this.keepInStockInfos.get(i);
+            final NBTTagCompound keepInStock = keepInStockInfo.serializeNBT();
+            if (!keepInStockInfo.getItemStack().isEmpty()) {
+                keepInStocks.setTag(Integer.toString(i), keepInStock);
+            }
+        }
+        tagCompound.setTag("KeepInStock", keepInStocks);
     }
 
     @Override
     public void readFromNBT(NBTTagCompound tagCompound) {
         super.readFromNBT(tagCompound);
         this.transferRate = tagCompound.getInteger("TransferRate");
-        final NBTTagCompound filterNBT = tagCompound.getCompoundTag("Filter");
-        this.itemFilter.getItemFilter().readFromNBT(filterNBT);
+        this.isWorkingAllowed = tagCompound.getBoolean("WorkingAllowed");
+        final NBTTagCompound KeepInStocks = tagCompound.getCompoundTag("KeepInStock");
+        for (int i = 0; i < this.keepInStockInfos.size(); ++i) {
+            final NBTTagCompound keepInStock = KeepInStocks.getCompoundTag(Integer.toString(i));
+            if (keepInStock != null) {
+                this.keepInStockInfos.get(i).deserializeNBT(keepInStock);
+            } else {
+                this.keepInStockInfos.set(i, new KeepInStockInfo(slotLimit));
+            }
+        }
     }
 }
