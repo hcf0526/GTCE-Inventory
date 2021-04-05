@@ -1,8 +1,6 @@
 # GTCE Inventory
 [Curseforge](https://www.curseforge.com/minecraft/mc-mods/gtce-inventory)
 
-Not yet released to curseforge.
-
 [Changelog](CHANGELOG.md)
 
 ## Table of Contents
