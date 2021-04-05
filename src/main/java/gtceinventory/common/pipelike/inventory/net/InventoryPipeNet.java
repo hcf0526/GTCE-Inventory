@@ -96,13 +96,13 @@ public class InventoryPipeNet extends PipeNet<EmptyNodeData> implements ITickabl
             } else {
                 //otherwise, it is donating of some nodes to our net in result of split
                 //so, we should estabilish equal amount of energy in networks
-                long firstNetCapacity = this.energyContainer.getEnergyCapacity();
-                long secondNetCapacity = parentInventoryNet.energyContainer.getEnergyCapacity();
-                long totalEnergy = this.energyContainer.getEnergyStored() + parentEnergy;
-                long energy1 = totalEnergy * firstNetCapacity / (firstNetCapacity + secondNetCapacity);
-                long energy2 = totalEnergy - energy1;
+                final long firstNetCapacity = this.energyContainer.getEnergyCapacity();
+                final long secondNetCapacity = parentInventoryNet.energyContainer.getEnergyCapacity();
+                final long totalEnergy = this.energyContainer.getEnergyStored() + parentEnergy;
+                final long energy1 = totalEnergy * firstNetCapacity / (firstNetCapacity + secondNetCapacity);
+                final long energy2 = totalEnergy - energy1;
 
-                energyContainer.setEnergyStored(energy1);
+                this.energyContainer.setEnergyStored(energy1);
                 parentEnergyContainer.setEnergyStored(energy2);
             }
         }
@@ -125,15 +125,15 @@ public class InventoryPipeNet extends PipeNet<EmptyNodeData> implements ITickabl
     }
 
     public ItemStorageNetwork getStorageNetwork() {
-        if (storageNetwork == null) {
+        if (this.storageNetwork == null) {
             Preconditions.checkNotNull(getWorldData(), "World is null at the time getStorageNetwork is called!");
             this.storageNetwork = new ItemStorageNetwork(this);
         }
-        return storageNetwork;
+        return this.storageNetwork;
     }
 
     public IEnergyContainer getEnergyContainer() {
-        return energyContainer;
+        return this.energyContainer;
     }
 
     @Override

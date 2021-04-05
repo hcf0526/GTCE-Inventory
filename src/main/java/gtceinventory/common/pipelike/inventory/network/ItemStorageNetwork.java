@@ -64,21 +64,21 @@ public class ItemStorageNetwork extends ItemSourceList implements IStorageNetwor
     }
 
     @Override
-    public int extractItem(ItemStackKey itemStack, int amount, boolean simulate) {
-        final int result = super.extractItem(itemStack, amount, simulate);
-        if (simulate) {
-            return checkEnergy(result);
+    public int extractItem(final ItemStackKey itemStack, final int amount, final boolean simulate) {
+        if (!checkEnergy(amount)) {
+            return 0;
         }
+        final int result = super.extractItem(itemStack, amount, simulate);
         drainEnergy(result);
         return result;
     }
 
     @Override
-    public int insertItem(ItemStackKey itemStack, int amount, boolean simulate, InsertMode mode) {
-        final int result = super.insertItem(itemStack, amount, simulate, mode);
-        if (simulate) {
-            return checkEnergy(result);
+    public int insertItem(final ItemStackKey itemStack, final int amount, final boolean simulate, final InsertMode mode) {
+        if (!checkEnergy(amount)) {
+            return 0;
         }
+        final int result = super.insertItem(itemStack, amount, simulate, mode);
         drainEnergy(result);
         return result;
     }
@@ -158,14 +158,12 @@ public class ItemStorageNetwork extends ItemSourceList implements IStorageNetwor
         return 0;
     }
 
-    protected int checkEnergy(final int amount) {
-        if (pipeNet.getEnergyContainer().getEnergyStored() < calculateEnergy(amount))
-            return 0;
-        return amount;
+    protected boolean checkEnergy(final int amount) {
+        return this.pipeNet.getEnergyContainer().getEnergyStored() >= calculateEnergy(amount);
     }
 
     protected void drainEnergy(final int amount) {
-        pipeNet.getEnergyContainer().removeEnergy(calculateEnergy(amount));
+        this.pipeNet.getEnergyContainer().removeEnergy(calculateEnergy(amount));
     }
 
     private static SidedBlockPos handlerPosition(TileItemSource handlerInfo) {
