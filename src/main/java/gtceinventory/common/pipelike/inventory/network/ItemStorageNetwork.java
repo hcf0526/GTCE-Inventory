@@ -69,7 +69,9 @@ public class ItemStorageNetwork extends ItemSourceList implements IStorageNetwor
             return 0;
         }
         final int result = super.extractItem(itemStack, amount, simulate);
-        drainEnergy(result);
+        if (!simulate) {
+            drainEnergy(result);
+        }
         return result;
     }
 
@@ -79,7 +81,9 @@ public class ItemStorageNetwork extends ItemSourceList implements IStorageNetwor
             return 0;
         }
         final int result = super.insertItem(itemStack, amount, simulate, mode);
-        drainEnergy(result);
+        if (!simulate) {
+            drainEnergy(result);
+        }
         return result;
     }
 
