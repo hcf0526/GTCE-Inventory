@@ -20,27 +20,24 @@ package gtceinventory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import gregtech.api.GTValues;
 import gtceinventory.api.capability.GTCEInventoryCapabilityManager;
 import gtceinventory.common.CommonProxy;
 import gtceinventory.common.blocks.GTCEInventoryMetaBlocks;
 import gtceinventory.common.covers.GTCEInventoryCoverBehaviors;
 import gtceinventory.common.items.GTCEInventoryMetaItems;
 import gtceinventory.common.metatileentities.GTCEInventoryMetaTileEntities;
-import gtceinventory.integration.multipart.GTCEInventoryMultipartFactory;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.Optional.Method;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Mod(modid = GTCEInventory.MODID, name = GTCEInventory.NAME, version = GTCEInventory.VERSION, dependencies = "required-after:gregtech@[1.13.0.681,)")
+@Mod(modid = GTCEInventory.MODID, name = GTCEInventory.NAME, version = GTCEInventory.VERSION, dependencies = "required-after:gregtech@[1.17.1.770,)")
 public class GTCEInventory {
     public static final String MODID = "gtceinventory";
     public static final String NAME = "GTCE Inventory";
@@ -75,10 +72,5 @@ public class GTCEInventory {
         if (event.getModID().equals(MODID)) {
             ConfigManager.sync(MODID, Config.Type.INSTANCE);
         }
-    }
-
-    @Method(modid = GTValues.MODID_FMP)
-    private void registerForgeMultipartCompat() {
-        GTCEInventoryMultipartFactory.INSTANCE.registerFactory();
     }
 }

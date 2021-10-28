@@ -31,6 +31,7 @@ import gregtech.common.blocks.BlockMachineCasing.MachineCasingType;
 import gregtech.common.blocks.MetaBlocks;
 import gtceinventory.GTCEInventory;
 import gtceinventory.common.metatileentities.GTCEInventoryMetaTileEntities;
+import gtceinventory.loaders.recipe.GTCEInventoryRecipeLoader;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
@@ -71,6 +72,8 @@ public class CommonProxy {
             'X', new UnificationEntry(OrePrefix.plate, Materials.Lead));
 
         ModHandler.addShapedRecipe("gtceinventory_workbench_bronze", GTCEInventoryMetaTileEntities.WORKBENCH.getStackForm(), "ChC", "PHP", "PWP", 'C', OreDictNames.chestWood, 'W', new ItemStack(Blocks.CRAFTING_TABLE), 'P', new UnificationEntry(OrePrefix.plate, Materials.Bronze), 'H', MetaBlocks.MACHINE_CASING.getItemVariant(MachineCasingType.BRONZE_HULL));
+
+        GTCEInventoryRecipeLoader.init();
     }
 
     private static <T extends Block> ItemBlock createItemBlock(final T block, final Function<T, ItemBlock> producer) {
